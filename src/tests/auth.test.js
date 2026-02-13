@@ -14,7 +14,7 @@ describe('Pruebas de Seguridad (JWT)', () => {
             .get('/api/products')
             .send();
         
-        // Esperamos un error 401 (No autorizado)
+        // Esperamos un error 401 
         expect(res.statusCode).toEqual(401);
         expect(res.body).toHaveProperty('msg', 'No hay token, permiso denegado');
     });
@@ -29,8 +29,6 @@ describe('Pruebas de Seguridad (JWT)', () => {
     });
 
     it('Debería permitir el acceso si el token es válido (Simulado)', async () => {
-        // Nota: Para una prueba real de éxito necesitaríamos generar un token válido aquí
-        // Este es un ejemplo de cómo ajustarías la prueba manualmente para casos de éxito
         const tokenValido = "simulacion_de_token"; 
         const res = await request(app)
             .get('/api/products')

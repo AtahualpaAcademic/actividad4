@@ -1,6 +1,6 @@
 const Product = require('../models/Product');
 
-// 1. OBTENER TODOS LOS PRODUCTOS
+// OBTENER TODOS LOS PRODUCTOS
 exports.obtenerProductos = async (req, res) => {
     try {
         const productos = await Product.find();
@@ -10,7 +10,7 @@ exports.obtenerProductos = async (req, res) => {
     }
 };
 
-// 2. CREAR UN PRODUCTO
+// CREAR UN PRODUCTO
 exports.crearProducto = async (req, res) => {
     try {
         const nuevoProducto = new Product(req.body);
@@ -21,7 +21,7 @@ exports.crearProducto = async (req, res) => {
     }
 };
 
-// 3. ACTUALIZAR UN PRODUCTO (NUEVO)
+// ACTUALIZAR UN PRODUCTO 
 exports.actualizarProducto = async (req, res) => {
     try {
         const { nombre, precio, stock } = req.body;
@@ -41,7 +41,7 @@ exports.actualizarProducto = async (req, res) => {
     }
 };
 
-// 4. ELIMINAR UN PRODUCTO (NUEVO)
+// ELIMINAR UN PRODUCTO
 exports.eliminarProducto = async (req, res) => {
     try {
         const producto = await Product.findById(req.params.id);
