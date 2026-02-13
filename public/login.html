@@ -36,10 +36,22 @@
 
         function toggleForm() {
             isLogin = !isLogin;
+    
+            // Referencias a los elementos
             const title = document.getElementById('form-title');
             const nombreInput = document.getElementById('nombre');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
             const btn = document.getElementById('btn-main');
             const toggleText = document.getElementById('toggle-text');
+            const mensaje = document.getElementById('mensaje');
+
+            // Limpiamos los campos y el mensaje al cambiar de modo
+            nombreInput.value = "";
+            emailInput.value = "";
+            passwordInput.value = "";
+            mensaje.innerText = "";
+            // ------------------------------
 
             if (isLogin) {
                 title.innerText = "Iniciar Sesión";
