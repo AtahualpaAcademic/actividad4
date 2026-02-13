@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Productos - Gestión</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
+        h1 { color: #1a73e8; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #555; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-logout { background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+        .mensaje { color: #28a745; font-weight: bold; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gestión de Productos</h1>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+        
+        <div id="mensaje" class="mensaje"></div>
+
+        <h3>Lista de Inventario</h3>
+        <table id="tabla-productos">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="lista-productos">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 1. Verificar si hay un token al cargar la página
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html'; // Redirigir si no está logueado
+        }
+
+        // 2. Cargar productos desde la API
+        async function cargarProductos() {
+            try {
+                const response = await fetch('/api/products', {
+                    headers: { 'x-auth-token': token }
+                });
+                
+                if (response.status === 401) logout(); // Token inválido o expirado
+
+                const productos = await response.json();
+                const tabla = document.getElementById('lista-productos');
+                tabla.innerHTML = '';
+
+                productos.forEach(prod => {
+                    tabla.innerHTML += `
+                        <tr>
+                            <td>${prod.nombre}</td>
+                            <td>$${prod.precio}</td>
+                            <td>${prod.stock}</td>
+                            <td>
+                                <button class="btn-delete" onclick="eliminarProducto('${prod._id}')">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar productos:", error);
+            }
+        }
+
+        // 3. Función para Eliminar (Prueba del CRUD)
+        async function eliminarProducto(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+
+            try {
+                const response = await fetch(`/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (response.ok) {
+                    document.getElementById('mensaje').innerText = "Producto eliminado correctamente.";
+                    cargarProductos(); // Recargar la lista
+                }
+            } catch (error) {
+                alert("Error al eliminar");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // Iniciar carga
+        cargarProductos();
+    </script>
+</body>
+</html>
