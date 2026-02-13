@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const auth = require('../../middleware/auth');
+const auth = require('../middleware/auth');
 
 // Todas las rutas usan el middleware 'auth' para protección JWT
 router.get('/', auth, productController.obtenerProductos);
