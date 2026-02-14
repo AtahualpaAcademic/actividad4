@@ -2,107 +2,141 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Productos - Gestión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Pro | TechZone Solutions</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
-        h1 { color: #1a73e8; margin: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; color: #555; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .btn-logout { background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-        .mensaje { color: #28a745; font-weight: bold; margin-bottom: 1rem; }
+        :root { --primary: #2563eb; --danger: #ef4444; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Header & Nav */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: #fee2e2; color: var(--danger); }
+        .btn-outline { background: transparent; border: 1px solid #ddd; }
+
+        /* Form Card */
+        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        input { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; }
+        input:focus { border-color: var(--primary); }
+
+        /* Table Design */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th { text-align: left; padding: 16px; background: #f1f5f9; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 16px; border-top: 1px solid #f1f5f9; }
+        .actions { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Gestión de Productos</h1>
-            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
-        </div>
-        
-        <div id="mensaje" class="mensaje"></div>
 
-        <h3>Lista de Inventario</h3>
-        <table id="tabla-productos">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="lista-productos">
-                </tbody>
-        </table>
+<div class="container">
+    <div class="header">
+        <h1>TechZone Inventory</h1>
+        <button class="btn btn-outline" onclick="logout()">Cerrar Sesión</button>
     </div>
 
-    <script>
-        // 1. Verificar si hay un token al cargar la página
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login.html'; // Redirigir si no está logueado
+    <div class="card">
+        <h3 id="form-title">Agregar Nuevo Producto</h3>
+        <div class="grid-form">
+            <input type="hidden" id="prod-id">
+            <input type="text" id="nombre" placeholder="Nombre del producto">
+            <input type="number" id="precio" placeholder="Precio ($)">
+            <input type="number" id="stock" placeholder="Cantidad en Stock">
+            <button class="btn btn-primary" id="btn-save" onclick="guardarProducto()">Guardar Producto</button>
+            <button class="btn btn-outline" id="btn-cancel" style="display:none;" onclick="resetForm()">Cancelar</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="lista-productos"></tbody>
+    </table>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login.html';
+
+    async function cargarProductos() {
+        const res = await fetch('/api/products', { headers: { 'x-auth-token': token } });
+        if (res.status === 401) logout();
+        const productos = await res.json();
+        const tbody = document.getElementById('lista-productos');
+        tbody.innerHTML = productos.map(p => `
+            <tr>
+                <td><strong>${p.nombre}</strong></td>
+                <td>$${p.precio}</td>
+                <td>${p.stock} unidades</td>
+                <td class="actions">
+                    <button class="btn btn-outline" onclick="prepararEdicion('${p._id}', '${p.nombre}', ${p.precio}, ${p.stock})">Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarProducto('${p._id}')">Borrar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function guardarProducto() {
+        const id = document.getElementById('prod-id').value;
+        const data = {
+            nombre: document.getElementById('nombre').value,
+            precio: document.getElementById('precio').value,
+            stock: document.getElementById('stock').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/products/${id}` : '/api/products';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            resetForm();
+            cargarProductos();
         }
+    }
 
-        // 2. Cargar productos desde la API
-        async function cargarProductos() {
-            try {
-                const response = await fetch('/api/products', {
-                    headers: { 'x-auth-token': token }
-                });
-                
-                if (response.status === 401) logout(); // Token inválido o expirado
+    function prepararEdicion(id, nombre, precio, stock) {
+        document.getElementById('form-title').innerText = "Editando: " + nombre;
+        document.getElementById('prod-id').value = id;
+        document.getElementById('nombre').value = nombre;
+        document.getElementById('precio').value = precio;
+        document.getElementById('stock').value = stock;
+        document.getElementById('btn-save').innerText = "Actualizar Cambios";
+        document.getElementById('btn-cancel').style.display = "block";
+    }
 
-                const productos = await response.json();
-                const tabla = document.getElementById('lista-productos');
-                tabla.innerHTML = '';
+    function resetForm() {
+        document.getElementById('form-title').innerText = "Agregar Nuevo Producto";
+        document.getElementById('prod-id').value = "";
+        document.getElementById('nombre').value = "";
+        document.getElementById('precio').value = "";
+        document.getElementById('stock').value = "";
+        document.getElementById('btn-save').innerText = "Guardar Producto";
+        document.getElementById('btn-cancel').style.display = "none";
+    }
 
-                productos.forEach(prod => {
-                    tabla.innerHTML += `
-                        <tr>
-                            <td>${prod.nombre}</td>
-                            <td>$${prod.precio}</td>
-                            <td>${prod.stock}</td>
-                            <td>
-                                <button class="btn-delete" onclick="eliminarProducto('${prod._id}')">Eliminar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (error) {
-                console.error("Error al cargar productos:", error);
-            }
+    async function eliminarProducto(id) {
+        if (confirm('¿Eliminar permanentemente de MongoDB Atlas?')) {
+            await fetch(`/api/products/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } });
+            cargarProductos();
         }
+    }
 
-        // 3. Función para Eliminar (Prueba del CRUD)
-        async function eliminarProducto(id) {
-            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-
-            try {
-                const response = await fetch(`/api/products/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-
-                if (response.ok) {
-                    document.getElementById('mensaje').innerText = "Producto eliminado correctamente.";
-                    cargarProductos(); // Recargar la lista
-                }
-            } catch (error) {
-                alert("Error al eliminar");
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-        }
-
-        // Iniciar carga
-        cargarProductos();
-    </script>
+    function logout() { localStorage.removeItem('token'); window.location.href = '/login.html'; }
+    cargarProductos();
+</script>
 </body>
 </html>
